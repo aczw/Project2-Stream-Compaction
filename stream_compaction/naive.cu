@@ -8,10 +8,12 @@ namespace StreamCompaction {
 namespace Naive {
 
 using StreamCompaction::Common::PerformanceTimer;
+
 PerformanceTimer& timer() {
   static PerformanceTimer timer;
   return timer;
 }
+
 // TODO: __global__
 
 /**

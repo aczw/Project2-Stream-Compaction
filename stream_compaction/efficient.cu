@@ -8,6 +8,7 @@ namespace StreamCompaction {
 namespace Efficient {
 
 using StreamCompaction::Common::PerformanceTimer;
+
 PerformanceTimer& timer() {
   static PerformanceTimer timer;
   return timer;

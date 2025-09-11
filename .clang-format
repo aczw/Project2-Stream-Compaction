@@ -4,6 +4,7 @@ ColumnLimit: 120
 InsertNewlineAtEOF: true
 AllowShortIfStatementsOnASingleLine: WithoutElse
 WrapNamespaceBodyWithEmptyLines: Always
+SeparateDefinitionBlocks: Always
 
 IncludeBlocks: Regroup
 IncludeCategories:

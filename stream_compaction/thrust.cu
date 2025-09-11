@@ -12,10 +12,12 @@ namespace StreamCompaction {
 namespace Thrust {
 
 using StreamCompaction::Common::PerformanceTimer;
+
 PerformanceTimer& timer() {
   static PerformanceTimer timer;
   return timer;
 }
+
 /**
  * Performs prefix-sum (aka scan) on idata, storing the result into odata.
  */
