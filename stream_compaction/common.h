@@ -32,6 +32,7 @@ inline int ilog2ceil(int x) {
 
 namespace StreamCompaction {
 namespace Common {
+
 __global__ void kernMapToBoolean(int n, int* bools, const int* idata);
 
 __global__ void kernScatter(int n, int* odata, const int* idata, const int* bools, const int* indices);
@@ -127,5 +128,6 @@ class PerformanceTimer {
   float prev_elapsed_time_cpu_milliseconds = 0.f;
   float prev_elapsed_time_gpu_milliseconds = 0.f;
 };
+
 }  // namespace Common
 }  // namespace StreamCompaction

@@ -1,4 +1,15 @@
 BasedOnStyle: Chromium
+
 ColumnLimit: 120
 InsertNewlineAtEOF: true
 AllowShortIfStatementsOnASingleLine: WithoutElse
+WrapNamespaceBodyWithEmptyLines: Always
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^".*"'
+    Priority: 1
+  - Regex: '^<cuda*.*>'
+    Priority: 2
+  - Regex: '^<.*>'
+    Priority: 3

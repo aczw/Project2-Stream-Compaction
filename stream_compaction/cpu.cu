@@ -5,9 +5,11 @@
 
 namespace StreamCompaction {
 namespace CPU {
+
 using StreamCompaction::Common::PerformanceTimer;
 
 namespace {
+
 inline void scanImplementation(int n, int* odata, const int* idata) {
   int currentSum = 0;
   for (int i = 0; i < n; ++i) {
@@ -15,6 +17,7 @@ inline void scanImplementation(int n, int* odata, const int* idata) {
     currentSum += idata[i];
   }
 }
+
 }  // namespace
 
 PerformanceTimer& timer() {
@@ -91,5 +94,6 @@ int compactWithScan(int n, int* odata, const int* idata) {
 
   return scanResult[n - 1];
 }
+
 }  // namespace CPU
 }  // namespace StreamCompaction

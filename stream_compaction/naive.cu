@@ -1,10 +1,12 @@
-#include <cuda.h>
-#include <cuda_runtime.h>
 #include "common.h"
 #include "naive.h"
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 namespace StreamCompaction {
 namespace Naive {
+
 using StreamCompaction::Common::PerformanceTimer;
 PerformanceTimer& timer() {
   static PerformanceTimer timer;
@@ -20,5 +22,6 @@ void scan(int n, int* odata, const int* idata) {
   // TODO
   timer().endGpuTimer();
 }
+
 }  // namespace Naive
 }  // namespace StreamCompaction

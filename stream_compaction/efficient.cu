@@ -1,10 +1,12 @@
-#include <cuda.h>
-#include <cuda_runtime.h>
 #include "common.h"
 #include "efficient.h"
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 namespace StreamCompaction {
 namespace Efficient {
+
 using StreamCompaction::Common::PerformanceTimer;
 PerformanceTimer& timer() {
   static PerformanceTimer timer;
@@ -35,5 +37,6 @@ int compact(int n, int* odata, const int* idata) {
   timer().endGpuTimer();
   return -1;
 }
+
 }  // namespace Efficient
 }  // namespace StreamCompaction
