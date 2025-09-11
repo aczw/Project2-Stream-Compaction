@@ -1,11 +1,21 @@
-#include <cstdio>
 #include "cpu.h"
-
 #include "common.h"
+
+#include <memory>
 
 namespace StreamCompaction {
     namespace CPU {
         using StreamCompaction::Common::PerformanceTimer;
+
+        namespace {
+          inline void scanImplementation(int n, int* odata, const int* idata) {
+            int currentSum = 0;
+            for (int i = 0; i < n; ++i) {
+              odata[i] = currentSum;
+              currentSum += idata[i];
+            }
+          }
+        }
         
         PerformanceTimer& timer()
         {
@@ -23,11 +33,7 @@ namespace StreamCompaction {
             
             if (n <= 0) return;
 
-            int currentSum = 0;
-            for (int i = 0; i < n; ++i) {
-              odata[i] = currentSum;
-              currentSum += idata[i];
-            }
+            scanImplementation(n, odata, idata);
 
             timer().endCpuTimer();
         }
@@ -64,9 +70,26 @@ namespace StreamCompaction {
          */
         int compactWithScan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            // TODO
+
+            if (n <= 0) return 0;
+            
+            std::unique_ptr<int[]> valid = std::make_unique<int[]>(n);
+            for (int i = 0; i < n; ++i) {
+              valid[i] = idata[i] > 0 ? 1 : 0;
+            }
+
+            std::unique_ptr<int[]> scanResult = std::make_unique<int[]>(n);
+            scanImplementation(n, scanResult.get(), valid.get());
+
+            for (int i = 0; i < n; ++i) {
+              if (valid[i] > 0) {
+                odata[scanResult[i]] = idata[i];
+              }
+            }
+
             timer().endCpuTimer();
-            return -1;
+
+            return scanResult[n - 1];
         }
     }
 }
