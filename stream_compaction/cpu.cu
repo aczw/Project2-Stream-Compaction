@@ -6,6 +6,7 @@
 namespace StreamCompaction {
     namespace CPU {
         using StreamCompaction::Common::PerformanceTimer;
+        
         PerformanceTimer& timer()
         {
             static PerformanceTimer timer;
@@ -19,7 +20,15 @@ namespace StreamCompaction {
          */
         void scan(int n, int *odata, const int *idata) {
             timer().startCpuTimer();
-            // TODO
+            
+            if (n <= 0) return;
+
+            int currentSum = 0;
+            for (int i = 0; i < n; ++i) {
+              odata[i] = currentSum;
+              currentSum += idata[i];
+            }
+
             timer().endCpuTimer();
         }
 
