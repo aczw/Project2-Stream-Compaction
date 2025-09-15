@@ -9,10 +9,6 @@ namespace Naive {
 
 using StreamCompaction::Common::PerformanceTimer;
 
-/// Toggle for including CUDA error checking at compile time. Not sure
-/// how much of a difference it makes to performance, guess we'll see!
-constexpr bool checkErrors = true;
-
 /// Number of threads per block.
 constexpr int blockSize = 256;
 
@@ -83,11 +79,10 @@ void scan(int n, int* odata, const int* idata) {
     cudaMemcpy(dev_dataA, dev_dataB, numBytes, cudaMemcpyDeviceToDevice);
   }
 
-  // Include writing to output in performance measurements because CPU does it too
-  cudaMemcpy(odata, dev_dataA, numBytes, cudaMemcpyDeviceToHost);
-  if constexpr (checkErrors) checkCUDAError("cudaMemcpy: dev_dataA -> odata failed!");
-
   timer().endGpuTimer();
+
+  cudaMemcpy(odata, dev_dataA, numBytes, cudaMemcpyDeviceToHost);
+  checkCUDAError("cudaMemcpy: dev_dataA -> odata failed!");
 
   // Convert from inclusive scan to exclusive
   if constexpr (useExclusiveScan) {
