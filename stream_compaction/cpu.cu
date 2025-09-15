@@ -32,12 +32,10 @@ PerformanceTimer& timer() {
  * first.
  */
 void scan(int n, int* odata, const int* idata) {
-  timer().startCpuTimer();
-
   if (n <= 0) return;
 
+  timer().startCpuTimer();
   scanImplementation(n, odata, idata);
-
   timer().endCpuTimer();
 }
 
@@ -47,9 +45,9 @@ void scan(int n, int* odata, const int* idata) {
  * @returns the number of elements remaining after compaction.
  */
 int compactWithoutScan(int n, int* odata, const int* idata) {
-  timer().startCpuTimer();
-
   if (n <= 0) return 0;
+
+  timer().startCpuTimer();
 
   int outputIndex = 0;
   for (int inputIndex = 0; inputIndex < n; ++inputIndex) {
@@ -72,16 +70,17 @@ int compactWithoutScan(int n, int* odata, const int* idata) {
  * @returns the number of elements remaining after compaction.
  */
 int compactWithScan(int n, int* odata, const int* idata) {
-  timer().startCpuTimer();
-
   if (n <= 0) return 0;
 
   std::unique_ptr<int[]> valid = std::make_unique<int[]>(n);
+  std::unique_ptr<int[]> scanResult = std::make_unique<int[]>(n);
+
+  timer().startCpuTimer();
+
   for (int i = 0; i < n; ++i) {
     valid[i] = idata[i] > 0 ? 1 : 0;
   }
 
-  std::unique_ptr<int[]> scanResult = std::make_unique<int[]>(n);
   scanImplementation(n, scanResult.get(), valid.get());
 
   for (int i = 0; i < n; ++i) {
