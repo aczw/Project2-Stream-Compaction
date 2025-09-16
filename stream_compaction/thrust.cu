@@ -5,7 +5,9 @@
 #include <cuda_runtime.h>
 
 #include <thrust/device_vector.h>
+#include <thrust/execution_policy.h>
 #include <thrust/host_vector.h>
+#include <thrust/remove.h>
 #include <thrust/scan.h>
 
 namespace StreamCompaction {
@@ -27,11 +29,38 @@ void scan(int n, int* odata, const int* idata) {
 
   timer().startGpuTimer();
 
-  thrust::exclusive_scan(dv_in.begin(), dv_in.end(), dv_out.begin());
+  thrust::exclusive_scan(thrust::device, dv_in.begin(), dv_in.end(), dv_out.begin());
 
   timer().endGpuTimer();
 
   thrust::copy(dv_out.begin(), dv_out.end(), odata);
+}
+
+struct isNotValid {
+  __host__ __device__ bool operator()(const int& element) { return element == 0; }
+};
+
+/**
+ * Performs stream compaction on idata, storing the result into odata.
+ * All zeroes are discarded.
+ *
+ * @param n      The number of elements in idata.
+ * @param odata  The array into which to store elements.
+ * @param idata  The array of elements to compact.
+ * @returns      The number of elements remaining after compaction.
+ */
+int compact(int n, int* odata, const int* idata) {
+  thrust::device_vector<int> dv_in(idata, idata + n);
+
+  timer().startGpuTimer();
+
+  auto newEndIt = thrust::remove_if(thrust::device, dv_in.begin(), dv_in.end(), isNotValid());
+
+  timer().endGpuTimer();
+
+  thrust::copy(dv_in.begin(), newEndIt, odata);
+
+  return thrust::distance(dv_in.begin(), newEndIt);
 }
 
 }  // namespace Thrust
