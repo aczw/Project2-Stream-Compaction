@@ -57,7 +57,7 @@ __global__ void kernTraverseDownLayer(int n, int* data, int layer, int stride) {
 /**
  * Performs prefix-sum (aka scan) on idata, storing the result into odata.
  */
-void scan(int n, int* odata, const int* idata) {
+void scan(int n, int* odata, const int* idata, bool measure) {
   int actualN = n;
   size_t numBytes = n * sizeof(int);
 
@@ -85,7 +85,7 @@ void scan(int n, int* odata, const int* idata) {
   cudaMemcpy(dev_data, actualInputData.get(), numBytes, cudaMemcpyHostToDevice);
   checkCUDAError("cudaMemcpy: actualInputData -> dev_data failed!");
 
-  timer().startGpuTimer();
+  if (measure) timer().startGpuTimer();
 
   // Perform up-sweep via parallel reduction
   for (int layer = 0; layer < ilog2(actualN); ++layer) {
@@ -109,7 +109,7 @@ void scan(int n, int* odata, const int* idata) {
     kernTraverseDownLayer<<<numBlocks, blockSize>>>(numDispatches, dev_data, layer, stride);
   }
 
-  timer().endGpuTimer();
+  if (measure) timer().endGpuTimer();
 
   if (paddingOpt) {
     // If previously padded, remove extra zeroes
@@ -135,10 +135,63 @@ void scan(int n, int* odata, const int* idata) {
  * @returns      The number of elements remaining after compaction.
  */
 int compact(int n, int* odata, const int* idata) {
+  int* dev_bools = nullptr;
+  int* dev_indices = nullptr;
+  int* dev_odata = nullptr;
+  int* dev_idata = nullptr;
+
+  int numBlocks = (n + blockSize - 1) / blockSize;
+  size_t numBytes = n * sizeof(int);
+
+  cudaMalloc(reinterpret_cast<void**>(&dev_bools), numBytes);
+  checkCUDAError("cudaMalloc: dev_bools failed");
+  cudaMalloc(reinterpret_cast<void**>(&dev_indices), numBytes);
+  checkCUDAError("cudaMalloc: dev_indices failed");
+  cudaMalloc(reinterpret_cast<void**>(&dev_odata), numBytes);
+  checkCUDAError("cudaMalloc: dev_odata failed");
+  cudaMalloc(reinterpret_cast<void**>(&dev_idata), numBytes);
+  checkCUDAError("cudaMalloc: dev_idata failed");
+
+  std::unique_ptr<int[]> indices = std::make_unique<int[]>(n);
+  std::unique_ptr<int[]> bools = std::make_unique<int[]>(n);
+
+  cudaMemcpy(dev_idata, idata, numBytes, cudaMemcpyHostToDevice);
+  checkCUDAError("cudaMemcpy: idata -> dev_idata failed");
+
   timer().startGpuTimer();
-  // TODO
+
+  Common::kernMapToBoolean<<<numBlocks, blockSize>>>(n, dev_bools, dev_idata);
+  cudaMemcpy(bools.get(), dev_bools, numBytes, cudaMemcpyDeviceToHost);
+  if constexpr (checkErrorsDuringTimer) checkCUDAError("cudaMemcpy: dev_bools -> bools failed");
+  scan(n, indices.get(), bools.get(), false);
+  cudaMemcpy(dev_indices, indices.get(), numBytes, cudaMemcpyHostToDevice);
+  if constexpr (checkErrorsDuringTimer) checkCUDAError("cudaMemcpy: indices -> dev_indices failed");
+  Common::kernScatter<<<numBlocks, blockSize>>>(n, dev_odata, dev_idata, dev_bools, dev_indices);
+
   timer().endGpuTimer();
-  return -1;
+
+  cudaMemcpy(odata, dev_indices, numBytes, cudaMemcpyDeviceToHost);
+  checkCUDAError("cudaMemcpy: dev_indices -> odata failed");
+  int numRemaining = odata[n - 1];
+
+  cudaMemcpy(odata, dev_odata, numBytes, cudaMemcpyDeviceToHost);
+  checkCUDAError("cudaMemcpy: dev_odata -> odata failed");
+
+  cudaFree(dev_bools);
+  checkCUDAError("cudaFree: dev_bools failed");
+  cudaFree(dev_indices);
+  checkCUDAError("cudaFree: dev_indices failed");
+  cudaFree(dev_odata);
+  checkCUDAError("cudaFree: dev_odata failed");
+  cudaFree(dev_idata);
+  checkCUDAError("cudaFree: dev_idata failed");
+
+  // Since we're doing an exclusive scan, we need to manually check if the last element is valid
+  if (bools[n - 1]) {
+    return numRemaining + 1;
+  } else {
+    return numRemaining;
+  }
 }
 
 }  // namespace Efficient
