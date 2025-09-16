@@ -65,7 +65,7 @@ void scan(int n, int* odata, const int* idata) {
   for (int iteration = 1; iteration <= ilog2ceil(n); ++iteration) {
     int stride = 1 << (iteration - 1);
     int numDispatches = n - stride;
-    int numBlocks = (numDispatches + blockSize + 1) / blockSize;
+    int numBlocks = (numDispatches + blockSize - 1) / blockSize;
 
     if constexpr (runInnerLoopOnGPU) {
       kernSumStrided<<<numBlocks, blockSize>>>(n, dev_dataA, dev_dataB, stride);

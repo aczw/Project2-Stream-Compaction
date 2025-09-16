@@ -72,7 +72,7 @@ void scan(int n, int* odata, const int* idata) {
   for (int layer = 0; layer < ilog2(actualN); ++layer) {
     int stride = 1 << (layer + 1);
     int numDispatches = actualN / stride;
-    int numBlocks = (numDispatches + blockSize + 1) / blockSize;
+    int numBlocks = (numDispatches + blockSize - 1) / blockSize;
 
     for (int k = 0; k < actualN; k += stride) {
       kernReductionAddPair<<<numBlocks, blockSize>>>(numDispatches, dev_data, layer, k);
