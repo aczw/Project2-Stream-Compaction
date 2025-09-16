@@ -10,7 +10,7 @@ namespace Naive {
 using StreamCompaction::Common::PerformanceTimer;
 
 /// Number of threads per block.
-constexpr int blockSize = 256;
+constexpr int blockSize = 128;
 
 /// Whether to return an inclusive or exclusive scan.
 constexpr bool useExclusiveScan = true;

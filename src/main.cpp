@@ -1,6 +1,7 @@
 #include "testing_helpers.hpp"
 
 #include <cstdio>
+#include <functional>
 #include <stream_compaction/cpu.h>
 #include <stream_compaction/efficient.h>
 #include <stream_compaction/naive.h>
@@ -17,13 +18,21 @@ constexpr bool enablePrintingArrays = false;
 
 constexpr bool enableCPUScan = false;
 constexpr bool enableNaiveScan = true;
-constexpr bool enableEfficientScan = false;
+constexpr bool enableEfficientScan = true;
 constexpr bool enableThrustScan = false;
 
 constexpr bool enableCPUCompactWith = false;
-constexpr bool enableCPUCompactWithout = false;
-constexpr bool enableEfficientCompact = false;
+constexpr bool enableEfficientCompact = true;
 constexpr bool enableThrustCompact = false;
+
+namespace Perf {
+
+using ScanFn = std::function<void(int, int*, const int*)>;
+using CompactionFn = std::function<int(int, int*, const int*)>;
+
+constexpr int numIterations = 1'000;
+
+}  // namespace Perf
 
 int* a = new int[SIZE];
 int* b = new int[SIZE];
@@ -180,23 +189,21 @@ int main(int argc, char* argv[]) {
 
   // initialize b using StreamCompaction::CPU::compactWithoutScan you implement
   // We use b for further comparison. Make sure your StreamCompaction::CPU::compactWithoutScan is correct.
-  if constexpr (enableCPUCompactWithout) {
-    zeroArray(SIZE, b);
-    printDesc("cpu compact without scan, power-of-two");
-    count = StreamCompaction::CPU::compactWithoutScan(SIZE, b, a);
-    printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
-    expectedCount = count;
-    if constexpr (enablePrintingArrays) printArray(count, b, true);
-    printCmpLenResult(count, expectedCount, b, b);
+  zeroArray(SIZE, b);
+  printDesc("cpu compact without scan, power-of-two");
+  count = StreamCompaction::CPU::compactWithoutScan(SIZE, b, a);
+  printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+  expectedCount = count;
+  if constexpr (enablePrintingArrays) printArray(count, b, true);
+  printCmpLenResult(count, expectedCount, b, b);
 
-    zeroArray(SIZE, c);
-    printDesc("cpu compact without scan, non-power-of-two");
-    count = StreamCompaction::CPU::compactWithoutScan(NPOT, c, a);
-    printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
-    expectedNPOT = count;
-    if constexpr (enablePrintingArrays) printArray(count, c, true);
-    printCmpLenResult(count, expectedNPOT, b, c);
-  }
+  zeroArray(SIZE, c);
+  printDesc("cpu compact without scan, non-power-of-two");
+  count = StreamCompaction::CPU::compactWithoutScan(NPOT, c, a);
+  printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+  expectedNPOT = count;
+  if constexpr (enablePrintingArrays) printArray(count, c, true);
+  printCmpLenResult(count, expectedNPOT, b, c);
 
   if constexpr (enableCPUCompactWith) {
     zeroArray(SIZE, b);

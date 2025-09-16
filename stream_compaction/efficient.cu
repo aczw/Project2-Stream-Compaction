@@ -11,6 +11,12 @@
 namespace StreamCompaction {
 namespace Efficient {
 
+namespace {
+
+bool enableScanMeasure = true;
+
+}
+
 using StreamCompaction::Common::PerformanceTimer;
 
 /// Number of threads per block.
@@ -57,7 +63,7 @@ __global__ void kernTraverseDownLayer(int n, int* data, int layer, int stride) {
 /**
  * Performs prefix-sum (aka scan) on idata, storing the result into odata.
  */
-void scan(int n, int* odata, const int* idata, bool measure) {
+void scan(int n, int* odata, const int* idata) {
   int actualN = n;
   size_t numBytes = n * sizeof(int);
 
@@ -85,7 +91,7 @@ void scan(int n, int* odata, const int* idata, bool measure) {
   cudaMemcpy(dev_data, actualInputData.get(), numBytes, cudaMemcpyHostToDevice);
   checkCUDAError("cudaMemcpy: actualInputData -> dev_data failed!");
 
-  if (measure) timer().startGpuTimer();
+  if (enableScanMeasure) timer().startGpuTimer();
 
   // Perform up-sweep via parallel reduction
   for (int layer = 0; layer < ilog2(actualN); ++layer) {
@@ -109,7 +115,7 @@ void scan(int n, int* odata, const int* idata, bool measure) {
     kernTraverseDownLayer<<<numBlocks, blockSize>>>(numDispatches, dev_data, layer, stride);
   }
 
-  if (measure) timer().endGpuTimer();
+  if (enableScanMeasure) timer().endGpuTimer();
 
   if (paddingOpt) {
     // If previously padded, remove extra zeroes
@@ -163,7 +169,11 @@ int compact(int n, int* odata, const int* idata) {
   Common::kernMapToBoolean<<<numBlocks, blockSize>>>(n, dev_bools, dev_idata);
   cudaMemcpy(bools.get(), dev_bools, numBytes, cudaMemcpyDeviceToHost);
   if constexpr (checkErrorsDuringTimer) checkCUDAError("cudaMemcpy: dev_bools -> bools failed");
-  scan(n, indices.get(), bools.get(), false);
+
+  enableScanMeasure = false;
+  scan(n, indices.get(), bools.get());
+  enableScanMeasure = true;
+
   cudaMemcpy(dev_indices, indices.get(), numBytes, cudaMemcpyHostToDevice);
   if constexpr (checkErrorsDuringTimer) checkCUDAError("cudaMemcpy: indices -> dev_indices failed");
   Common::kernScatter<<<numBlocks, blockSize>>>(n, dev_odata, dev_idata, dev_bools, dev_indices);
