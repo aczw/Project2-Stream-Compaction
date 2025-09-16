@@ -15,31 +15,21 @@ constexpr int blockSize = 256;
 /// Whether to return an inclusive or exclusive scan.
 constexpr bool useExclusiveScan = true;
 
-/// Perform inner loop within the kernel. Results in only 1 invocation per "layer" versus one
-/// kernel dispatch per iteration of the inner loop.
-constexpr bool runInnerLoopOnGPU = true;
-
 PerformanceTimer& timer() {
   static PerformanceTimer timer;
   return timer;
 }
 
-__global__ void kernSumStrided(int n, const int* in, int* out, int stride) {
-  int tId = (blockDim.x * blockIdx.x) + threadIdx.x;
+__global__ void kernSumPairsForIteration(int n, const int* in, int* out, int stride) {
+  int k = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  if (tId >= n) return;
+  // As the number of dispatches decrease with every iteration, we have to add the stride to
+  // get the last index of the array
+  if (k >= n + stride) return;
 
-  for (int k = stride; k <= n; ++k) {
+  if (k >= stride) {
     out[k] = in[k - stride] + in[k];
   }
-}
-
-__global__ void kernAddStridedPair(int n, const int* in, int* out, int k, int stride) {
-  int tId = (blockDim.x * blockIdx.x) + threadIdx.x;
-
-  if (tId >= n) return;
-
-  out[k] = in[k - stride] + in[k];
 }
 
 /**
@@ -67,15 +57,9 @@ void scan(int n, int* odata, const int* idata) {
     int numDispatches = n - stride;
     int numBlocks = (numDispatches + blockSize - 1) / blockSize;
 
-    if constexpr (runInnerLoopOnGPU) {
-      kernSumStrided<<<numBlocks, blockSize>>>(n, dev_dataA, dev_dataB, stride);
-    } else {
-      for (int k = stride; k < n; ++k) {
-        kernAddStridedPair<<<numBlocks, blockSize>>>(numDispatches, dev_dataA, dev_dataB, k, stride);
-      }
-    }
+    kernSumPairsForIteration<<<numBlocks, blockSize>>>(numDispatches, dev_dataA, dev_dataB, stride);
 
-    // Swap read and write buffers (output in B will be read next in A)
+    // Write new results back into A to be read from
     cudaMemcpy(dev_dataA, dev_dataB, numBytes, cudaMemcpyDeviceToDevice);
   }
 
