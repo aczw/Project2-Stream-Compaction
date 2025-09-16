@@ -187,7 +187,6 @@ int main(int argc, char* argv[]) {
   printArray(count, c, true);
   printCmpLenResult(count, expectedNPOT, b, c);
 
-  system("pause");  // stop Win32 console from closing on exit
   delete[] a;
   delete[] b;
   delete[] c;
