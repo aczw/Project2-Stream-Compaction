@@ -16,6 +16,9 @@ using StreamCompaction::Common::PerformanceTimer;
 /// Number of threads per block.
 constexpr int blockSize = 256;
 
+/// Enable `checkCUDAError()` calls within the performance measuring fence.
+constexpr bool checkErrorsDuringTimer = true;
+
 PerformanceTimer& timer() {
   static PerformanceTimer timer;
   return timer;
@@ -33,6 +36,22 @@ __global__ void kernReduceForLayer(int n, int* data, int layer, int stride) {
   int leftChild = offset + previousStride - 1;
 
   data[rightChild] += data[leftChild];
+}
+
+__global__ void kernTraverseDownLayer(int n, int* data, int layer, int stride) {
+  int k = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+  if (k >= n) return;
+
+  int offset = k * stride;
+  int previousStride = 1 << layer;
+
+  int rightChild = offset + stride - 1;
+  int leftChild = offset + previousStride - 1;
+
+  int leftValue = data[leftChild];
+  data[leftChild] = data[rightChild];
+  data[rightChild] += leftValue;
 }
 
 /**
@@ -77,9 +96,18 @@ void scan(int n, int* odata, const int* idata) {
     kernReduceForLayer<<<numBlocks, blockSize>>>(numDispatches, dev_data, layer, stride);
   }
 
-  // cudaMemcpy(actualInputData.get(), dev_data, numBytes, cudaMemcpyDeviceToHost);
-  // std::cout << "reduction: ";
-  // printArray(actualN, actualInputData.get());
+  // Zero out the root
+  int zero = 0;
+  cudaMemcpy(dev_data + (actualN - 1), &zero, sizeof(int), cudaMemcpyHostToDevice);
+  if constexpr (checkErrorsDuringTimer) checkCUDAError("cudaMemcpy: 0 -> dev_data failed!");
+
+  for (int layer = ilog2(actualN) - 1; layer >= 0; --layer) {
+    int stride = 1 << (layer + 1);
+    int numDispatches = actualN / stride;
+    int numBlocks = (numDispatches + blockSize - 1) / blockSize;
+
+    kernTraverseDownLayer<<<numBlocks, blockSize>>>(numDispatches, dev_data, layer, stride);
+  }
 
   timer().endGpuTimer();
 

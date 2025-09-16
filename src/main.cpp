@@ -14,9 +14,9 @@
 #include <stream_compaction/naive.h>
 #include <stream_compaction/thrust.h>
 
-constexpr bool runDebugTests = true;  // runs additional simpler tests
-const int SIZE = 1 << 8;              // feel free to change the size of array
-const int NPOT = SIZE - 3;            // Non-Power-Of-Two
+constexpr bool runDebugTests = false;  // runs additional simpler tests
+const int SIZE = 1 << 8;               // feel free to change the size of array
+const int NPOT = SIZE - 3;             // Non-Power-Of-Two
 
 int* a = new int[SIZE];
 int* b = new int[SIZE];
