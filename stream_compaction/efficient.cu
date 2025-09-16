@@ -21,22 +21,18 @@ PerformanceTimer& timer() {
   return timer;
 }
 
-__global__ void kernReductionAddPair(int n, int* data, int layer, int k) {
-  int tId = (blockIdx.x * blockDim.x) + threadIdx.x;
+__global__ void kernReduceForLayer(int n, int* data, int layer, int stride) {
+  int k = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  if (tId >= n) return;
+  if (k >= n) return;
 
-  data[k + (1 << (layer + 1)) - 1] += data[k + (1 << layer) - 1];
-}
+  int offset = k * stride;
+  int previousStride = 1 << layer;
 
-__global__ void kernTest(int n, int* data, int layer, int stride) {
-  int tId = (blockIdx.x * blockDim.x) + threadIdx.x;
+  int rightChild = offset + stride - 1;
+  int leftChild = offset + previousStride - 1;
 
-  if (tId >= n) return;
-
-  for (int k = 0; k < n; k += stride) {
-    data[k + (1 << (layer + 1)) - 1] += data[k + (1 << layer) - 1];
-  }
+  data[rightChild] += data[leftChild];
 }
 
 /**
@@ -64,12 +60,6 @@ void scan(int n, int* odata, const int* idata) {
     actualInputData.swap(paddedInputData);
   }
 
-  // std::cout << "\n--> padded (size " << actualN << "): [ ";
-  // for (int i = 0; i < actualN; ++i) {
-  //   std::cout << actualInputData[i] << " ";
-  // }
-  // std::cout << "]\n" << std::endl;
-
   int* dev_data = nullptr;
   cudaMalloc(reinterpret_cast<void**>(&dev_data), numBytes);
   checkCUDAError("cudaMalloc: dev_data failed!");
@@ -84,11 +74,12 @@ void scan(int n, int* odata, const int* idata) {
     int numDispatches = actualN / stride;
     int numBlocks = (numDispatches + blockSize - 1) / blockSize;
 
-    // for (int k = 0; k < actualN; k += stride) {
-    //   kernReductionAddPair<<<numBlocks, blockSize>>>(numDispatches, dev_data, layer, k);
-    // }
-    kernTest<<<numBlocks, blockSize>>>(actualN, dev_data, layer, stride);
+    kernReduceForLayer<<<numBlocks, blockSize>>>(numDispatches, dev_data, layer, stride);
   }
+
+  // cudaMemcpy(actualInputData.get(), dev_data, numBytes, cudaMemcpyDeviceToHost);
+  // std::cout << "reduction: ";
+  // printArray(actualN, actualInputData.get());
 
   timer().endGpuTimer();
 
@@ -101,12 +92,6 @@ void scan(int n, int* odata, const int* idata) {
     cudaMemcpy(odata, dev_data, numBytes, cudaMemcpyDeviceToHost);
     checkCUDAError("cudaMemcpy: dev_data -> odata failed!");
   }
-
-  // std::cout << "\n--> reduction (orig. size " << n << "): [ ";
-  // for (int i = 0; i < n; ++i) {
-  //   std::cout << odata[i] << " ";
-  // }
-  // std::cout << "]\n" << std::endl;
 
   cudaFree(dev_data);
   checkCUDAError("cudaFree: dev_data failed!");

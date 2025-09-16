@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 #include <stdexcept>
 
 #define FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
@@ -28,6 +29,14 @@ inline int ilog2(int x) {
 
 inline int ilog2ceil(int x) {
   return x == 1 ? 0 : ilog2(x - 1) + 1;
+}
+
+inline void printArray(int n, const int* data) {
+  std::cout << "[ ";
+  for (int i = 0; i < n; ++i) {
+    std::cout << data[i] << " ";
+  }
+  std::cout << "]" << std::endl;
 }
 
 namespace StreamCompaction {
