@@ -4,6 +4,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include <memory>
+
 namespace StreamCompaction {
 namespace Efficient {
 
@@ -18,6 +20,21 @@ PerformanceTimer& timer() {
  * Performs prefix-sum (aka scan) on idata, storing the result into odata.
  */
 void scan(int n, int* odata, const int* idata) {
+  int actualN = n;
+  const int* actualInputData = idata;
+
+  // Input array size is not a power of two; we have to pad the left with zeroes
+  if (int numLeaves = 1 << ilog2ceil(n); n < numLeaves) {
+    int offset = numLeaves - n;
+
+    // Pad to the next power of two
+    std::unique_ptr<int[]> paddedInputData = std::make_unique<int[]>(numLeaves);
+    std::memcpy(paddedInputData.get() + offset, idata, n * sizeof(int));
+
+    actualN = numLeaves;
+    actualInputData = paddedInputData.release();
+  }
+
   timer().startGpuTimer();
   // TODO
   timer().endGpuTimer();
