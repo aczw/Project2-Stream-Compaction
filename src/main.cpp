@@ -166,6 +166,22 @@ int main(int argc, char* argv[]) {
   printArray(count, c, true);
   printCmpLenResult(count, expectedNPOT, b, c);
 
+  zeroArray(SIZE, b);
+  printDesc("cpu compact with scan, power-of-two");
+  count = StreamCompaction::CPU::compactWithScan(SIZE, b, a);
+  printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+  expectedCount = count;
+  printArray(count, b, true);
+  printCmpLenResult(count, expectedCount, b, b);
+
+  zeroArray(SIZE, c);
+  printDesc("cpu compact with scan, non-power-of-two");
+  count = StreamCompaction::CPU::compactWithScan(NPOT, c, a);
+  printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+  expectedNPOT = count;
+  printArray(count, c, true);
+  printCmpLenResult(count, expectedNPOT, b, c);
+
   zeroArray(SIZE, c);
   printDesc("cpu compact with scan");
   count = StreamCompaction::CPU::compactWithScan(SIZE, c, a);
