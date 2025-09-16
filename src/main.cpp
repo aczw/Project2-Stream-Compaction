@@ -15,13 +15,13 @@ constexpr bool runDebugTests = false;
 /// Print out resulting arrays from computation.
 constexpr bool enablePrintingArrays = false;
 
-constexpr bool enableCPUScan = true;
-constexpr bool enableNaiveScan = false;
+constexpr bool enableCPUScan = false;
+constexpr bool enableNaiveScan = true;
 constexpr bool enableEfficientScan = false;
 constexpr bool enableThrustScan = false;
 
-constexpr bool enableCPUCompactWith = true;
-constexpr bool enableCPUCompactWithout = true;
+constexpr bool enableCPUCompactWith = false;
+constexpr bool enableCPUCompactWithout = false;
 constexpr bool enableEfficientCompact = false;
 constexpr bool enableThrustCompact = false;
 
@@ -44,13 +44,13 @@ int main(int argc, char* argv[]) {
   // initialize b using StreamCompaction::CPU::scan you implement
   // We use b for further comparison. Make sure your StreamCompaction::CPU::scan is correct.
   // At first all cases passed because b && c are all zeroes.
-  if constexpr (enableCPUScan) {
-    zeroArray(SIZE, b);
-    printDesc("cpu scan, power-of-two");
-    StreamCompaction::CPU::scan(SIZE, b, a);
-    printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
-    if constexpr (enablePrintingArrays) printArray(SIZE, b, true);
+  zeroArray(SIZE, b);
+  printDesc("cpu scan, power-of-two");
+  StreamCompaction::CPU::scan(SIZE, b, a);
+  printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+  if constexpr (enablePrintingArrays) printArray(SIZE, b, true);
 
+  if constexpr (enableCPUScan) {
     zeroArray(SIZE, c);
     printDesc("cpu scan, non-power-of-two");
     StreamCompaction::CPU::scan(NPOT, c, a);
@@ -116,14 +116,13 @@ int main(int argc, char* argv[]) {
 
     onesArray(SIZE, a);
 
-    if constexpr (enableCPUScan) {
-      zeroArray(SIZE, b);
-      printDesc("cpu scan, power-of-two");
-      StreamCompaction::CPU::scan(SIZE, b, a);
-      printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(),
-                       "(std::chrono Measured)");
-      if constexpr (enablePrintingArrays) printArray(SIZE, b, true);
+    zeroArray(SIZE, b);
+    printDesc("cpu scan, power-of-two");
+    StreamCompaction::CPU::scan(SIZE, b, a);
+    printElapsedTime(StreamCompaction::CPU::timer().getCpuElapsedTimeForPreviousOperation(), "(std::chrono Measured)");
+    if constexpr (enablePrintingArrays) printArray(SIZE, b, true);
 
+    if constexpr (enableCPUScan) {
       zeroArray(SIZE, c);
       printDesc("cpu scan, non-power-of-two");
       StreamCompaction::CPU::scan(NPOT, c, a);

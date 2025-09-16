@@ -23,11 +23,11 @@ PerformanceTimer& timer() {
 __global__ void kernSumPairsForIteration(int n, const int* in, int* out, int stride) {
   int k = (blockIdx.x * blockDim.x) + threadIdx.x;
 
-  // As the number of dispatches decrease with every iteration, we have to add the stride to
-  // get the last index of the array
-  if (k >= n + stride || k < stride) return;
+  if (k >= n) return;
 
-  out[k] = in[k - stride] + in[k];
+  int outIndex = stride + k;
+
+  out[outIndex] = in[k] + in[outIndex];
 }
 
 /**
