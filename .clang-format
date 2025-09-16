@@ -12,5 +12,7 @@ IncludeCategories:
     Priority: 1
   - Regex: '^<cuda*.*>'
     Priority: 2
-  - Regex: '^<.*>'
+  - Regex: '^<thrust*.*>'
     Priority: 3
+  - Regex: '^<.*>'
+    Priority: 4
