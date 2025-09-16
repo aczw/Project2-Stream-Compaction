@@ -14,9 +14,9 @@
 #include <stream_compaction/naive.h>
 #include <stream_compaction/thrust.h>
 
-constexpr bool runDebugTests = false;  // runs additional simpler tests
-const int SIZE = 1 << 8;               // feel free to change the size of array
-const int NPOT = SIZE - 3;             // Non-Power-Of-Two
+constexpr bool runDebugTests = true;  // runs additional simpler tests
+const int SIZE = 1 << 8;              // feel free to change the size of array
+const int NPOT = SIZE - 3;            // Non-Power-Of-Two
 
 int* a = new int[SIZE];
 int* b = new int[SIZE];
@@ -120,6 +120,20 @@ int main(int argc, char* argv[]) {
     printElapsedTime(StreamCompaction::Naive::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
     printArray(SIZE, c, true);
     printCmpResult(SIZE, b, c);
+
+    zeroArray(SIZE, c);
+    printDesc("work-efficient scan, power-of-two");
+    StreamCompaction::Efficient::scan(SIZE, c, a);
+    printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    printArray(SIZE, c, true);
+    printCmpResult(SIZE, b, c);
+
+    zeroArray(SIZE, c);
+    printDesc("work-efficient scan, non-power-of-two");
+    StreamCompaction::Efficient::scan(NPOT, c, a);
+    printElapsedTime(StreamCompaction::Efficient::timer().getGpuElapsedTimeForPreviousOperation(), "(CUDA Measured)");
+    printArray(NPOT, c, true);
+    printCmpResult(NPOT, b, c);
   }
 
   printf("\n");
