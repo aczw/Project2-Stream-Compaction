@@ -29,6 +29,16 @@ __global__ void kernReductionAddPair(int n, int* data, int layer, int k) {
   data[k + (1 << (layer + 1)) - 1] += data[k + (1 << layer) - 1];
 }
 
+__global__ void kernTest(int n, int* data, int layer, int stride) {
+  int tId = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+  if (tId >= n) return;
+
+  for (int k = 0; k < n; k += stride) {
+    data[k + (1 << (layer + 1)) - 1] += data[k + (1 << layer) - 1];
+  }
+}
+
 /**
  * Performs prefix-sum (aka scan) on idata, storing the result into odata.
  */
@@ -74,9 +84,10 @@ void scan(int n, int* odata, const int* idata) {
     int numDispatches = actualN / stride;
     int numBlocks = (numDispatches + blockSize - 1) / blockSize;
 
-    for (int k = 0; k < actualN; k += stride) {
-      kernReductionAddPair<<<numBlocks, blockSize>>>(numDispatches, dev_data, layer, k);
-    }
+    // for (int k = 0; k < actualN; k += stride) {
+    //   kernReductionAddPair<<<numBlocks, blockSize>>>(numDispatches, dev_data, layer, k);
+    // }
+    kernTest<<<numBlocks, blockSize>>>(actualN, dev_data, layer, stride);
   }
 
   timer().endGpuTimer();
