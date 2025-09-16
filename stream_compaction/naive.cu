@@ -50,9 +50,9 @@ void scan(int n, int* odata, const int* idata) {
   int* dev_dataB = nullptr;
 
   size_t numBytes = n * sizeof(int);
-  cudaMalloc((void**)&dev_dataA, numBytes);
+  cudaMalloc(reinterpret_cast<void**>(&dev_dataA), numBytes);
   checkCUDAError("cudaMalloc: dev_dataA failed!");
-  cudaMalloc((void**)&dev_dataB, numBytes);
+  cudaMalloc(reinterpret_cast<void**>(&dev_dataB), numBytes);
   checkCUDAError("cudaMalloc: dev_dataB failed!");
 
   cudaMemcpy(dev_dataA, idata, numBytes, cudaMemcpyHostToDevice);

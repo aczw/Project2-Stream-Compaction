@@ -22,6 +22,7 @@ PerformanceTimer& timer() {
 void scan(int n, int* odata, const int* idata) {
   int actualN = n;
   const int* actualInputData = idata;
+  size_t numBytes = n * sizeof(int);
 
   // Input array size is not a power of two; we have to pad the left with zeroes
   if (int numLeaves = 1 << ilog2ceil(n); n < numLeaves) {
@@ -29,15 +30,25 @@ void scan(int n, int* odata, const int* idata) {
 
     // Pad to the next power of two
     std::unique_ptr<int[]> paddedInputData = std::make_unique<int[]>(numLeaves);
-    std::memcpy(paddedInputData.get() + offset, idata, n * sizeof(int));
+    std::memcpy(paddedInputData.get() + offset, idata, numBytes);
 
     actualN = numLeaves;
     actualInputData = paddedInputData.release();
+    numBytes = numLeaves * sizeof(int);
   }
+
+  int* dev_data = nullptr;
+  cudaMalloc(reinterpret_cast<void**>(&dev_data), numBytes);
+  checkCUDAError("cudaMalloc: dev_data failed!");
+  cudaMemcpy(dev_data, actualInputData, numBytes, cudaMemcpyHostToDevice);
+  checkCUDAError("cudaMemcpy: actualInputData -> dev_data failed!");
 
   timer().startGpuTimer();
   // TODO
   timer().endGpuTimer();
+
+  cudaFree(dev_data);
+  checkCUDAError("cudaFree: dev_data failed!");
 }
 
 /**
