@@ -20,7 +20,7 @@ bool enableScanMeasure = true;
 using StreamCompaction::Common::PerformanceTimer;
 
 /// Number of threads per block.
-constexpr int blockSize = 256;
+constexpr int blockSize = 512;
 
 /// Enable `checkCUDAError()` calls within the performance measuring fence.
 constexpr bool checkErrorsDuringTimer = true;

@@ -23,8 +23,8 @@ constexpr bool runBenchmarks = true;
 constexpr bool enablePrintingArrays = false;
 
 constexpr bool enableCPUScan = false;
-constexpr bool enableNaiveScan = true;
-constexpr bool enableEfficientScan = false;
+constexpr bool enableNaiveScan = false;
+constexpr bool enableEfficientScan = true;
 constexpr bool enableThrustScan = false;
 
 constexpr bool enableCPUCompact = false;
