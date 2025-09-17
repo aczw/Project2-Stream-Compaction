@@ -39,7 +39,7 @@ using CompactionFn = std::function<int(int, int*, const int*)>;
 
 enum class Implementation { CPU, Naive, Efficient, Thrust };
 
-constexpr int numIterations = 1'000;
+constexpr int numIterations = 100'000;
 constexpr int maxValue = 50;
 
 std::pair<ScanFn, TimerFn> getScanImplementation(Implementation implementation) {
@@ -48,16 +48,29 @@ std::pair<ScanFn, TimerFn> getScanImplementation(Implementation implementation) 
   switch (implementation) {
     case Implementation::CPU:
       return std::make_pair<ScanFn, TimerFn>(CPU::scan, CPU::timer);
-
     case Implementation::Naive:
       return std::make_pair<ScanFn, TimerFn>(Naive::scan, Naive::timer);
-
     case Implementation::Efficient:
       return std::make_pair<ScanFn, TimerFn>(Efficient::scan, Efficient::timer);
-
     case Implementation::Thrust:
       return std::make_pair<ScanFn, TimerFn>(Thrust::scan, Thrust::timer);
+    default:
+      throw std::invalid_argument("invalid enum");
+  }
+}
 
+std::pair<CompactionFn, TimerFn> getCompactionImplementation(Implementation implementation) {
+  using namespace StreamCompaction;
+
+  switch (implementation) {
+    case Implementation::CPU:
+      return std::make_pair<CompactionFn, TimerFn>(CPU::compact, CPU::timer);
+    case Implementation::Efficient:
+      return std::make_pair<CompactionFn, TimerFn>(Efficient::compact, Efficient::timer);
+    case Implementation::Thrust:
+      return std::make_pair<CompactionFn, TimerFn>(Thrust::compact, Thrust::timer);
+    case Implementation::Naive:
+      throw std::invalid_argument("naive does not have compact");
     default:
       throw std::invalid_argument("invalid enum");
   }

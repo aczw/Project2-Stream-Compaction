@@ -39,6 +39,10 @@ void scan(int n, int* odata, const int* idata) {
   timer().endCpuTimer();
 }
 
+int compact(int n, int* odata, const int* idata) {
+  return compactWithScan(n, odata, idata);
+}
+
 /**
  * CPU stream compaction without using the scan function.
  *

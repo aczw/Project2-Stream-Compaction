@@ -9,6 +9,9 @@ StreamCompaction::Common::PerformanceTimer& timer();
 
 void scan(int n, int* odata, const int* idata);
 
+/// By default, `compact` will use `scan` because that is also true for `Efficient::compact`.
+int compact(int n, int* odata, const int* idata);
+
 int compactWithoutScan(int n, int* odata, const int* idata);
 
 int compactWithScan(int n, int* odata, const int* idata);
