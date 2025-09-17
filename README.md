@@ -27,12 +27,41 @@ Below I demonstrate how my algorithms performed in benchmarking tests.
 
 ## Performance benchmarks
 
-### Testing methodology
+### Methodology
 
-Fun fact: I originally was testing with *much* smaller array sizes, like $2^4$ and $2^{12}$. When I tried increasing the array size past $2^{18}$, the program would completely crash. I was really confused why at first, until I looked at the exception being thrown: *stack overflow*.
+For instance, this is what the output looks like for a benchmark where I'm running 10 iterations for each algorithm, on an array size of $2^{30}$:
 
-It turns out that because I was using `std::array` for my input and output arrays, I was allocating too much stack memory and literally ran out. Switching to heap allocation solved the issue.
+```
+********************
+** SCAN BENCHMARK **
+********************
+
+- Number of iterations: 10
+- Size of POT array: 1073741824
+- Size of NPOT array: 1073741821
+
+[CPU/POT] Average scan() time: 268.988
+[CPU/NPOT] Average scan() time: 287.848
+[Naive/POT] Average scan() time: 1381.91
+[Naive/NPOT] Average scan() time: 1382.35
+[Efficient/POT] Average scan() time: 233.941
+[Efficient/NPOT] Average scan() time: 239.228
+[Thrust/POT] Average scan() time: 23.0701
+[Thrust/NPOT] Executing scan(): 6 of 10...
+```
 
 ### Graphs
 
 ### Analysis
+
+### Miscellaneous: powers of scale
+
+Just wanted to share some other fun stuff I encountered while testing.
+
+I originally was testing with *much* smaller array sizes, like $2^4$ and $2^{12}$. When I tried increasing the array size past $2^{18}$, the program would instantly crash. I was really confused why at first, until I looked at the exception being thrown: *stack overflow*. Because I was using `std::array` for my input and output arrays, I was allocating too much stack memory and literally ran out. Switching to heap allocation solved the issue.
+
+I then tried testing with array sizes from $2^{18}$ to $2^{30}$, incrementing by 4. This turned out to not be helpful at all; my numbers ranged from 0.068ms using CPU and $2^{18}$ to 1380.23ms using naive and $2^{30}$. Furthermore, my naive at $2^{26}$ ran in 75ms, so there was a ~18× difference between two adjacent data points. This would have translated to a *horrible* graph, so I adjusted the numbers to what I have now. 
+
+Both of these experiences really left me with a newfound appreciation for exponents and the powers of two. It's *scary* how fast numbers can scale.
+
+## Test output
