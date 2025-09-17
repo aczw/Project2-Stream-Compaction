@@ -10,7 +10,7 @@
 #include <string_view>
 #include <utility>
 
-constexpr int sizePOT = 1 << 4;        // feel free to change the size of array
+constexpr int sizePOT = 1 << 8;        // feel free to change the size of array
 constexpr int sizeNPOT = sizePOT - 3;  // Non-Power-Of-Two
 
 /// If true, run additional simpler tests.
