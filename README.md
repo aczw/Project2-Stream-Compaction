@@ -29,6 +29,10 @@ Below I demonstrate how my algorithms performed in benchmarking tests.
 
 ### Testing methodology
 
+Fun fact: I originally was testing with *much* smaller array sizes, like $2^4$ and $2^{12}$. When I tried increasing the array size past $2^{18}$, the program would completely crash. I was really confused why at first, until I looked at the exception being thrown: *stack overflow*.
+
+It turns out that because I was using `std::array` for my input and output arrays, I was allocating too much stack memory and literally ran out. Switching to heap allocation solved the issue.
+
 ### Graphs
 
 ### Analysis

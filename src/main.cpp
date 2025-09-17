@@ -10,7 +10,7 @@
 #include <string_view>
 #include <utility>
 
-constexpr int sizePOT = 1 << 12;       // feel free to change the size of array
+constexpr int sizePOT = 1 << 18;       // feel free to change the size of array
 constexpr int sizeNPOT = sizePOT - 3;  // Non-Power-Of-Two
 
 /// If true, run additional simpler tests.
@@ -39,7 +39,7 @@ using CompactionFn = std::function<int(int, int*, const int*)>;
 
 enum class Implementation { CPU, Naive, Efficient, Thrust };
 
-constexpr int numIterations = 50'000;
+constexpr int numIterations = 10;
 constexpr int maxValue = 50;
 
 std::pair<ScanFn, TimerFn> getScanImplementation(Implementation implementation) {
@@ -71,14 +71,14 @@ void runScanBenchmark(Implementation implementation, int n, std::string_view ben
   const auto [scan, getTime] = getScanImplementation(implementation);
 
   std::vector<float> elapsedTimes;
-  std::array<int, sizePOT> out;
-  std::array<int, sizePOT> in;
-  genArray(sizePOT, in.data(), maxValue);
+  std::unique_ptr<int[]> out = std::make_unique<int[]>(sizePOT);
+  std::unique_ptr<int[]> in = std::make_unique<int[]>(sizePOT);
+  genArray(sizePOT, in.get(), maxValue);
 
   for (int i = 1; i <= numIterations; ++i) {
     std::cout << prefix << " Executing scan(): " << i << " of " << numIterations << "...\r";
 
-    scan(n, out.data(), in.data());
+    scan(n, out.get(), in.get());
     elapsedTimes.push_back(getTime());
   }
 
