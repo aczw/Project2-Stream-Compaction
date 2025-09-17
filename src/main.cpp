@@ -24,53 +24,43 @@ constexpr bool enablePrintingArrays = false;
 
 constexpr bool enableCPUScan = false;
 constexpr bool enableNaiveScan = true;
-constexpr bool enableEfficientScan = true;
+constexpr bool enableEfficientScan = false;
 constexpr bool enableThrustScan = false;
 
-constexpr bool enableCPUCompactWith = false;
-constexpr bool enableEfficientCompact = true;
+constexpr bool enableCPUCompact = false;
+constexpr bool enableEfficientCompact = false;
 constexpr bool enableThrustCompact = false;
 
 namespace Perf {
 
-using TimerFn = std::function<StreamCompaction::Common::PerformanceTimer&()>;
+using TimerFn = std::function<float()>;
 using ScanFn = std::function<void(int, int*, const int*)>;
 using CompactionFn = std::function<int(int, int*, const int*)>;
 
 enum class Implementation { CPU, Naive, Efficient, Thrust };
 
-constexpr int numIterations = 100'000;
+constexpr int numIterations = 5'000;
 constexpr int maxValue = 50;
 
 std::pair<ScanFn, TimerFn> getScanImplementation(Implementation implementation) {
   using namespace StreamCompaction;
 
-  switch (implementation) {
-    case Implementation::CPU:
-      return std::make_pair<ScanFn, TimerFn>(CPU::scan, CPU::timer);
-    case Implementation::Naive:
-      return std::make_pair<ScanFn, TimerFn>(Naive::scan, Naive::timer);
-    case Implementation::Efficient:
-      return std::make_pair<ScanFn, TimerFn>(Efficient::scan, Efficient::timer);
-    case Implementation::Thrust:
-      return std::make_pair<ScanFn, TimerFn>(Thrust::scan, Thrust::timer);
-    default:
-      throw std::invalid_argument("invalid enum");
-  }
-}
-
-std::pair<CompactionFn, TimerFn> getCompactionImplementation(Implementation implementation) {
-  using namespace StreamCompaction;
+  auto cpu = &Common::PerformanceTimer::getCpuElapsedTimeForPreviousOperation;
+  auto gpu = &Common::PerformanceTimer::getGpuElapsedTimeForPreviousOperation;
 
   switch (implementation) {
     case Implementation::CPU:
-      return std::make_pair<CompactionFn, TimerFn>(CPU::compact, CPU::timer);
-    case Implementation::Efficient:
-      return std::make_pair<CompactionFn, TimerFn>(Efficient::compact, Efficient::timer);
-    case Implementation::Thrust:
-      return std::make_pair<CompactionFn, TimerFn>(Thrust::compact, Thrust::timer);
+      return std::make_pair<ScanFn, TimerFn>(CPU::scan, std::bind(cpu, &CPU::timer()));
+
     case Implementation::Naive:
-      throw std::invalid_argument("naive does not have compact");
+      return std::make_pair<ScanFn, TimerFn>(Naive::scan, std::bind(gpu, &Naive::timer()));
+
+    case Implementation::Efficient:
+      return std::make_pair<ScanFn, TimerFn>(Efficient::scan, std::bind(gpu, &Efficient::timer()));
+
+    case Implementation::Thrust:
+      return std::make_pair<ScanFn, TimerFn>(Thrust::scan, std::bind(gpu, &Thrust::timer()));
+
     default:
       throw std::invalid_argument("invalid enum");
   }
@@ -78,7 +68,7 @@ std::pair<CompactionFn, TimerFn> getCompactionImplementation(Implementation impl
 
 void runScanBenchmark(Implementation implementation, int n, std::string_view benchmarkName) {
   std::string prefix = "[" + std::string(benchmarkName) + "]";
-  const auto [scan, timer] = getScanImplementation(implementation);
+  const auto [scan, getTime] = getScanImplementation(implementation);
 
   std::vector<float> elapsedTimes;
   std::array<int, sizePOT> out;
@@ -89,7 +79,7 @@ void runScanBenchmark(Implementation implementation, int n, std::string_view ben
     std::cout << prefix << " Executing scan(): " << i << " of " << numIterations << "...\r";
 
     scan(n, out.data(), in.data());
-    elapsedTimes.push_back(timer().getCpuElapsedTimeForPreviousOperation());
+    elapsedTimes.push_back(getTime());
   }
 
   float average = 0.f;
@@ -111,10 +101,31 @@ int main(int argc, char* argv[]) {
   if constexpr (runBenchmarks) {
     printf("********************\n");
     printf("** SCAN BENCHMARK **\n");
-    printf("********************\n");
+    printf("********************\n\n");
 
-    Perf::runScanBenchmark(Perf::Implementation::CPU, sizePOT, "CPU/POT");
-    Perf::runScanBenchmark(Perf::Implementation::CPU, sizeNPOT, "CPU/NPOT");
+    std::cout << "- Number of iterations: " << Perf::numIterations << std::endl;
+    std::cout << "- Size of POT array: " << sizePOT << std::endl;
+    std::cout << "- Size of NPOT array: " << sizeNPOT << "\n" << std::endl;
+
+    if constexpr (enableCPUScan) {
+      Perf::runScanBenchmark(Perf::Implementation::CPU, sizePOT, "CPU/POT");
+      Perf::runScanBenchmark(Perf::Implementation::CPU, sizeNPOT, "CPU/NPOT");
+    }
+
+    if constexpr (enableNaiveScan) {
+      Perf::runScanBenchmark(Perf::Implementation::Naive, sizePOT, "Naive/POT");
+      Perf::runScanBenchmark(Perf::Implementation::Naive, sizeNPOT, "Naive/NPOT");
+    }
+
+    if constexpr (enableEfficientScan) {
+      Perf::runScanBenchmark(Perf::Implementation::Efficient, sizePOT, "Efficient/POT");
+      Perf::runScanBenchmark(Perf::Implementation::Efficient, sizeNPOT, "Efficient/NPOT");
+    }
+
+    if constexpr (enableThrustScan) {
+      Perf::runScanBenchmark(Perf::Implementation::Thrust, sizePOT, "Thrust/POT");
+      Perf::runScanBenchmark(Perf::Implementation::Thrust, sizeNPOT, "Thrust/NPOT");
+    }
   } else {
     printf("****************\n");
     printf("** SCAN TESTS **\n");
@@ -284,7 +295,7 @@ int main(int argc, char* argv[]) {
     if constexpr (enablePrintingArrays) printArray(count, c, true);
     printCmpLenResult(count, expectedNPOT, b, c);
 
-    if constexpr (enableCPUCompactWith) {
+    if constexpr (enableCPUCompact) {
       zeroArray(sizePOT, b);
       printDesc("cpu compact with scan, power-of-two");
       count = StreamCompaction::CPU::compactWithScan(sizePOT, b, a);
