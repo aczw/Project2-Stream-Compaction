@@ -10,7 +10,7 @@
 #include <string_view>
 #include <utility>
 
-constexpr int sizePOT = 1 << 16;       // feel free to change the size of array
+constexpr int sizePOT = 1 << 12;       // feel free to change the size of array
 constexpr int sizeNPOT = sizePOT - 3;  // Non-Power-Of-Two
 
 /// If true, run additional simpler tests.
@@ -39,7 +39,7 @@ using CompactionFn = std::function<int(int, int*, const int*)>;
 
 enum class Implementation { CPU, Naive, Efficient, Thrust };
 
-constexpr int numIterations = 5'000;
+constexpr int numIterations = 10'000;
 constexpr int maxValue = 50;
 
 std::pair<ScanFn, TimerFn> getScanImplementation(Implementation implementation) {
