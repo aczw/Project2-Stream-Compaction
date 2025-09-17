@@ -52,6 +52,12 @@ For instance, this is what the output looks like for a benchmark where I'm runni
 
 ### Graphs
 
+These are my graphs. The left column has array sizes that are powers of two (POT), while the right column subtract 3 from the sizes, therefore making them not powers of two (NPOT).
+
+|Powers of two|Not powers of two|
+|:-:|:-:|
+|![](analysis/graphs/scan_pot.png)|![](analysis/graphs/scan_npot.png)|
+
 ### Analysis
 
 ### Miscellaneous: powers of scale
