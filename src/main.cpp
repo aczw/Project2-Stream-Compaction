@@ -10,14 +10,14 @@
 #include <string_view>
 #include <utility>
 
-constexpr int sizePOT = 1 << 30;       // feel free to change the size of array
+constexpr int sizePOT = 1 << 16;       // feel free to change the size of array
 constexpr int sizeNPOT = sizePOT - 3;  // Non-Power-Of-Two
 
 /// If true, run additional simpler tests.
 constexpr bool runDebugTests = false;
 
 /// Run benchmarks instead of tests.
-constexpr bool runBenchmarks = true;
+constexpr bool runBenchmarks = false;
 
 /// Print out resulting arrays from computation.
 constexpr bool enablePrintingArrays = false;
@@ -27,9 +27,9 @@ constexpr bool enableNaiveScan = true;
 constexpr bool enableEfficientScan = true;
 constexpr bool enableThrustScan = true;
 
-constexpr bool enableCPUCompact = false;
-constexpr bool enableEfficientCompact = false;
-constexpr bool enableThrustCompact = false;
+constexpr bool enableCPUCompact = true;
+constexpr bool enableEfficientCompact = true;
+constexpr bool enableThrustCompact = true;
 
 namespace Perf {
 

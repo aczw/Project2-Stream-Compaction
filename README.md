@@ -65,3 +65,64 @@ I then tried testing with array sizes from $2^{18}$ to $2^{30}$, incrementing by
 Both of these experiences really left me with a newfound appreciation for exponents and the powers of two. It's *scary* how fast numbers can scale.
 
 ## Test output
+
+This is the complete output for my tests. I used an array size of $2^{16}$ here.
+
+```
+****************
+** SCAN TESTS **
+****************
+    [  29  10  21  39  47  19  41  42   5  25  49  34   4 ...  32   0 ]
+==== cpu scan, power-of-two ====
+   elapsed time: 0.0168ms    (std::chrono Measured)
+==== cpu scan, non-power-of-two ====
+   elapsed time: 0.0162ms    (std::chrono Measured)
+    passed
+==== naive scan, power-of-two ====
+   elapsed time: 0.246016ms    (CUDA Measured)
+    passed
+==== naive scan, non-power-of-two ====
+   elapsed time: 0.313984ms    (CUDA Measured)
+    passed
+==== work-efficient scan, power-of-two ====
+   elapsed time: 0.806944ms    (CUDA Measured)
+    passed
+==== work-efficient scan, non-power-of-two ====
+   elapsed time: 0.3496ms    (CUDA Measured)
+    passed
+==== thrust scan, power-of-two ====
+   elapsed time: 0.088352ms    (CUDA Measured)
+    passed
+==== thrust scan, non-power-of-two ====
+   elapsed time: 0.09392ms    (CUDA Measured)
+    passed
+
+*****************************
+** STREAM COMPACTION TESTS **
+*****************************
+    [   3   2   1   3   3   1   1   0   1   3   1   2   0 ...   0   0 ]
+==== cpu compact without scan, power-of-two ====
+   elapsed time: 0.1223ms    (std::chrono Measured)
+    passed
+==== cpu compact without scan, non-power-of-two ====
+   elapsed time: 0.0794ms    (std::chrono Measured)
+    passed
+==== cpu compact with scan, power-of-two ====
+   elapsed time: 0.116ms    (std::chrono Measured)
+    passed
+==== cpu compact with scan, non-power-of-two ====
+   elapsed time: 0.1174ms    (std::chrono Measured)
+    passed
+==== work-efficient compact, power-of-two ====
+   elapsed time: 0.771552ms    (CUDA Measured)
+    passed
+==== work-efficient compact, non-power-of-two ====
+   elapsed time: 0.634944ms    (CUDA Measured)
+    passed
+==== thrust compact, power-of-two ====
+   elapsed time: 0.136608ms    (CUDA Measured)
+    passed
+==== thrust compact, non-power-of-two ====
+   elapsed time: 0.241568ms    (CUDA Measured)
+    passed
+```
